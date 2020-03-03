@@ -1,6 +1,23 @@
 # AdGuard Home API Change Log
 
 
+## v0.102: API changes
+
+### API: Set querylog parameters: POST /control/querylog_config
+
+* Added "hide_client_ip" boolean parameter
+
+Request:
+
+	POST /control/querylog_config
+
+	{
+		"enabled": true | false
+		"interval": 1 | 7 | 30 | 90
+		"hide_client_ip": true | false // hide clients' IP addresses
+	}
+
+
 ## v0.101: API changes
 
 ### API: Refresh filters: POST /control/filtering/refresh

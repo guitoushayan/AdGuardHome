@@ -35,6 +35,7 @@ func initDNSServer() error {
 	statsConf := stats.Config{
 		Filename:       filepath.Join(baseDir, "stats.db"),
 		LimitDays:      config.DNS.StatsInterval,
+		HideClientIP:   config.DNS.HideClientIP,
 		ConfigModified: onConfigModified,
 		HTTPRegister:   httpRegister,
 	}
@@ -47,6 +48,7 @@ func initDNSServer() error {
 		BaseDir:        baseDir,
 		Interval:       config.DNS.QueryLogInterval,
 		MemSize:        config.DNS.QueryLogMemSize,
+		HideClientIP:   config.DNS.HideClientIP,
 		ConfigModified: onConfigModified,
 		HTTPRegister:   httpRegister,
 	}

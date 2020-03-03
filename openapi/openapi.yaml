@@ -1581,6 +1581,9 @@ definitions:
             interval:
                 type: "integer"
                 description: "Time period to keep data (1 | 7 | 30 | 90)"
+            hide_client_ip:
+                type: "boolean"
+                description: "Hide clients' IP addresses"
 
     TlsConfig:
         type: "object"
