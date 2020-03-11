@@ -30,7 +30,7 @@ class LogsConfig extends Component {
 
     render() {
         const {
-            t, enabled, interval, processing, processingClear,
+            t, enabled, interval, processing, processingClear, hide_client_ip,
         } = this.props;
 
         return (
@@ -44,6 +44,7 @@ class LogsConfig extends Component {
                         initialValues={{
                             enabled,
                             interval,
+                            hide_client_ip,
                         }}
                         onSubmit={this.handleFormSubmit}
                         processing={processing}
@@ -59,6 +60,7 @@ class LogsConfig extends Component {
 LogsConfig.propTypes = {
     interval: PropTypes.number.isRequired,
     enabled: PropTypes.bool.isRequired,
+    hide_client_ip: PropTypes.bool.isRequired,
     processing: PropTypes.bool.isRequired,
     processingClear: PropTypes.bool.isRequired,
     setLogsConfig: PropTypes.func.isRequired,
