@@ -1625,7 +1625,7 @@ If started as:
 			gateway_ip: "192.168.8.1"
 			subnet_mask: "255.255.255.0"
 			range_start: "192.168.8.100"
-			range_end: "192.168.8.150"
+			range_end: "192.168.8.249"
 			lease_duration: 86400
 			icmp_timeout_msec: 1000
 
