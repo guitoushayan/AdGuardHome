@@ -1,7 +1,6 @@
 package home
 
 import (
-	"net"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -42,8 +41,8 @@ nameserver 1.2.3.4`)
 	assert.Equal(t, "br-lan", oc.iface)
 	assert.Equal(t, "192.168.8.1", oc.gwIP)
 	assert.Equal(t, "255.255.255.0", oc.snMask)
-	assert.True(t, oc.rangeStart.Equal(net.ParseIP("192.168.8.100").To4()))
-	assert.True(t, oc.rangeEnd.Equal(net.ParseIP("192.168.8.249").To4()))
+	assert.Equal(t, "192.168.8.100", oc.rangeStart)
+	assert.Equal(t, "192.168.8.249", oc.rangeEnd)
 	assert.Equal(t, uint32(43200), oc.leaseDur)
 	assert.Equal(t, "abab::1234", oc.bsDNS[0])
 	assert.Equal(t, "1.2.3.4", oc.bsDNS[1])

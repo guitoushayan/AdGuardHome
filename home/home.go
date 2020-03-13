@@ -126,12 +126,9 @@ func Main(version string, channel string, armVer string) {
 // run is a blocking method!
 // nolint
 func run(args options) {
-	// config file path can be overridden by command-line arguments:
+	Context.configFilename = "AdGuardHome.yaml"
 	if args.configFilename != "" {
 		Context.configFilename = args.configFilename
-	} else {
-		// Default config file name
-		Context.configFilename = "AdGuardHome.yaml"
 	}
 
 	// Init some of the Context fields right away
@@ -466,6 +463,49 @@ func cleanupAlways() {
 	log.Info("Stopped")
 }
 
+func autoConfig(opt options) error {
+	oc := openwrtConfig{}
+	err := oc.Start()
+	if err != nil {
+		return err
+	}
+
+	// config file path can be overridden by command-line arguments:
+	Context.configFilename = "AdGuardHome.yaml"
+	if len(opt.configFilename) != 0 {
+		Context.configFilename = opt.configFilename
+	}
+
+	initConfig()
+	if util.FileExists(config.getConfigFilename()) {
+		err = upgradeConfig()
+		if err != nil {
+			return err
+		}
+		err = parseConfig()
+		if err != nil {
+			return err
+		}
+	}
+
+	config.DNS.BootstrapDNS = oc.bsDNS
+
+	config.DHCP.Enabled = true
+	config.DHCP.InterfaceName = oc.iface
+	config.DHCP.GatewayIP = oc.gwIP
+	config.DHCP.SubnetMask = oc.snMask
+	config.DHCP.RangeStart = oc.rangeStart
+	config.DHCP.RangeEnd = oc.rangeEnd
+	config.DHCP.LeaseDuration = oc.leaseDur
+
+	err = config.write()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // command-line arguments
 type options struct {
 	verbose        bool   // is verbose logging enabled
@@ -477,6 +517,7 @@ type options struct {
 	pidFile        string // File name to save PID to
 	checkConfig    bool   // Check configuration and exit
 	disableUpdate  bool   // If set, don't check for updates
+	hasAutoConfig  bool   // 'auto-config' argument is specified
 
 	// service control action (see service.ControlAction array + "status" command)
 	serviceControlAction string
@@ -516,6 +557,9 @@ func loadOptions() options {
 		{"pidfile", "", "Path to a file where PID is stored", func(value string) { o.pidFile = value }, nil},
 		{"check-config", "", "Check configuration and exit", nil, func() { o.checkConfig = true }},
 		{"no-check-update", "", "Don't check for updates", nil, func() { o.disableUpdate = true }},
+		{"auto-config", "", "Create or update YAML configuration file from OpenWRT system configuration", nil, func() {
+			o.hasAutoConfig = true
+		}},
 		{"verbose", "v", "Enable verbose output", nil, func() { o.verbose = true }},
 		{"version", "", "Show the version and exit", nil, func() {
 			fmt.Printf("AdGuardHome %s\n", versionString)
@@ -566,6 +610,14 @@ func loadOptions() options {
 			printHelp()
 			os.Exit(64)
 		}
+	}
+
+	if o.hasAutoConfig {
+		err := autoConfig(o)
+		if err != nil {
+			log.Fatalf("%s", err)
+		}
+		os.Exit(0)
 	}
 
 	return o

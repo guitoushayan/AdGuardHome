@@ -2,6 +2,7 @@ package home
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net"
 	"strconv"
 
@@ -25,8 +26,8 @@ type openwrtConfig struct {
 	iface      string
 	gwIP       string
 	snMask     string
-	rangeStart net.IP
-	rangeEnd   net.IP
+	rangeStart string
+	rangeEnd   string
 	leaseDur   uint32
 
 	// yaml.dns.bootstrap_dns:
@@ -140,21 +141,23 @@ func (oc *openwrtConfig) prepareOutput() error {
 	if err != nil {
 		return fmt.Errorf("Invalid 'start': %s", oc.dhcpStart)
 	}
-	oc.rangeStart = make(net.IP, 4)
-	copy(oc.rangeStart, ipAddr.To4())
-	oc.rangeStart[3] = byte(nStart)
+	rangeStart := make(net.IP, 4)
+	copy(rangeStart, ipAddr.To4())
+	rangeStart[3] = byte(nStart)
+	oc.rangeStart = rangeStart.String()
 
 	nLim, err := strconv.Atoi(oc.dhcpLimit)
 	if err != nil {
 		return fmt.Errorf("Invalid 'start': %s", oc.dhcpLimit)
 	}
-	oc.rangeEnd = make(net.IP, 4)
-	copy(oc.rangeEnd, ipAddr.To4())
 	n := nStart + nLim - 1
 	if n <= 0 || n > 255 {
 		return fmt.Errorf("Invalid 'start' or 'limit': %s/%s", oc.dhcpStart, oc.dhcpLimit)
 	}
-	oc.rangeEnd[3] = byte(n)
+	rangeEnd := make(net.IP, 4)
+	copy(rangeEnd, ipAddr.To4())
+	rangeEnd[3] = byte(n)
+	oc.rangeEnd = rangeEnd.String()
 
 	if len(oc.dhcpLeasetime) == 0 || oc.dhcpLeasetime[len(oc.dhcpLeasetime)-1] != 'h' {
 		return fmt.Errorf("Invalid leasetime: %s", oc.dhcpLeasetime)
@@ -171,5 +174,26 @@ func (oc *openwrtConfig) prepareOutput() error {
 		}
 		oc.bsDNS = append(oc.bsDNS, s)
 	}
+	return nil
+}
+
+func (oc *openwrtConfig) Start() error {
+	data, err := ioutil.ReadFile("/etc/config/network")
+	if err != nil {
+		return err
+	}
+	oc.readConf(data, "interface", "lan")
+
+	data, err = ioutil.ReadFile("/etc/config/dhcp")
+	if err != nil {
+		return err
+	}
+	oc.readConf(data, "dhcp", "lan")
+
+	err = oc.prepareOutput()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
