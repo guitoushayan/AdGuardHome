@@ -18,7 +18,8 @@ type accessCtx struct {
 	allowedClientsIPNet    []net.IPNet // CIDRs of whitelist clients
 	disallowedClientsIPNet []net.IPNet // CIDRs of clients that should be blocked
 
-	blockedHosts map[string]bool // hosts that should be blocked
+	blockedHosts         map[string]bool // hosts that should be blocked
+	blockedHostsWildcard []string
 }
 
 func (a *accessCtx) Init(allowedClients, disallowedClients, blockedHosts []string) error {
@@ -32,15 +33,15 @@ func (a *accessCtx) Init(allowedClients, disallowedClients, blockedHosts []strin
 		return err
 	}
 
-	convertArrayToMap(&a.blockedHosts, blockedHosts)
-	return nil
-}
-
-func convertArrayToMap(dst *map[string]bool, src []string) {
-	*dst = make(map[string]bool)
-	for _, s := range src {
-		(*dst)[s] = true
+	a.blockedHosts = make(map[string]bool)
+	for _, s := range blockedHosts {
+		if !isWildcard(s) {
+			a.blockedHosts[s] = true
+		} else {
+			a.blockedHostsWildcard = append(a.blockedHostsWildcard, s)
+		}
 	}
+	return nil
 }
 
 // Split array of IP or CIDR into 2 containers for fast search
@@ -108,6 +109,16 @@ func (a *accessCtx) IsBlockedIP(ip string) bool {
 func (a *accessCtx) IsBlockedDomain(host string) bool {
 	a.lock.Lock()
 	_, ok := a.blockedHosts[host]
+
+	if !ok {
+		for _, wc := range a.blockedHostsWildcard {
+			if matchDomainWildcard(host, wc) {
+				ok = true
+				break
+			}
+		}
+	}
+
 	a.lock.Unlock()
 	return ok
 }
