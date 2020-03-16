@@ -90,6 +90,8 @@ type Dnsfilter struct {
 	parentalUpstream     upstream.Upstream
 	safeBrowsingUpstream upstream.Upstream
 
+	autoRewrites AutoRewrites
+
 	Config   // for direct access by library users, even a = assignment
 	confLock sync.RWMutex
 
@@ -135,6 +137,9 @@ const (
 
 	// ReasonRewrite - rewrite rule was applied
 	ReasonRewrite
+
+	// ReasonRewriteAuto - automatic DNS record
+	ReasonRewriteAuto
 )
 
 var reasonNames = []string{
@@ -150,6 +155,7 @@ var reasonNames = []string{
 	"FilteredBlockedService",
 
 	"Rewrite",
+	"RewriteAuto",
 }
 
 func (r Reason) String() string {
@@ -295,6 +301,13 @@ func (d *Dnsfilter) CheckHost(host string, qtype uint16, setts *RequestFiltering
 
 	result = d.processRewrites(host)
 	if result.Reason == ReasonRewrite {
+		return result, nil
+	}
+
+	ips := d.autoRewrites.process(host)
+	if ips != nil {
+		result.Reason = ReasonRewriteAuto
+		result.IPList = ips
 		return result, nil
 	}
 
@@ -651,6 +664,7 @@ func New(c *Config, blockFilters []Filter) *Dnsfilter {
 func (d *Dnsfilter) Start() {
 	d.filtersInitializerChan = make(chan filtersInitializerParams, 1)
 	go d.filtersInitializer()
+	d.autoRewrites.Init()
 
 	if d.Config.HTTPRegister != nil { // for tests
 		d.registerSecurityHandlers()

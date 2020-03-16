@@ -44,6 +44,7 @@ func FuncName() string {
 }
 
 // SplitNext - split string by a byte and return the first chunk
+// Skip empty chunks
 // Whitespace is trimmed
 func SplitNext(str *string, splitBy byte) string {
 	i := strings.IndexByte(*str, splitBy)
@@ -51,6 +52,14 @@ func SplitNext(str *string, splitBy byte) string {
 	if i != -1 {
 		s = (*str)[0:i]
 		*str = (*str)[i+1:]
+		k := 0
+		ch := rune(0)
+		for k, ch = range *str {
+			if byte(ch) != splitBy {
+				break
+			}
+		}
+		*str = (*str)[k:]
 	} else {
 		s = *str
 		*str = ""
