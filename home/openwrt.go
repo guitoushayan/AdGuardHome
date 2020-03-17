@@ -54,6 +54,7 @@ func parseCmd(line string) (string, string, string) {
 }
 
 // Parse system configuration data
+// nolint(gocyclo)
 func (oc *openwrtConfig) readConf(data []byte, section string, iface string) {
 	state := 0
 	sr := strings.NewReader(string(data))
