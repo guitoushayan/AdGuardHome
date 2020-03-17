@@ -3,6 +3,7 @@ package dnsfilter
 import (
 	"bufio"
 	"io"
+	"io/ioutil"
 	"net"
 	"os"
 	"strings"
@@ -13,19 +14,21 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 )
 
-// AutoRewrites - automatic DNS records
-type AutoRewrites struct {
+// AutoHosts - automatic DNS records
+type AutoHosts struct {
 	lock  sync.Mutex
 	table map[string][]net.IP
 }
 
 // Init - initialize
-func (a *AutoRewrites) Init() {
+func (a *AutoHosts) Init() {
 	a.table = make(map[string][]net.IP)
 	go a.periodicUpdate()
 }
 
-func (a *AutoRewrites) load(table map[string][]net.IP, fn string) {
+// Read IP-hostname pairs from file
+// Multiple hostnames per line (per one IP) is supported.
+func (a *AutoHosts) load(table map[string][]net.IP, fn string) {
 	f, err := os.Open(fn)
 	if err != nil {
 		log.Error("Auto-rewrites: %s", err)
@@ -33,6 +36,7 @@ func (a *AutoRewrites) load(table map[string][]net.IP, fn string) {
 	}
 	defer f.Close()
 	r := bufio.NewReader(f)
+	log.Debug("Loading hosts from file %s", fn)
 
 	for {
 		line, err := r.ReadString('\n')
@@ -65,10 +69,28 @@ func (a *AutoRewrites) load(table map[string][]net.IP, fn string) {
 	}
 }
 
-func (a *AutoRewrites) periodicUpdate() {
+// Periodically re-read static hosts from system files
+func (a *AutoHosts) periodicUpdate() {
 	for {
 		table := make(map[string][]net.IP)
 		a.load(table, "/etc/hosts")
+
+		dirs := []string{
+			"/tmp/hosts", // OpenWRT: "/tmp/hosts/dhcp.cfg01411c"
+		}
+		for _, dir := range dirs {
+			fis, err := ioutil.ReadDir(dir)
+			if err != nil {
+				if !os.IsNotExist(err) {
+					log.Error("Opening directory: %s: %s", dir, err)
+				}
+				continue
+			}
+
+			for _, fi := range fis {
+				a.load(table, fi.Name())
+			}
+		}
 
 		a.lock.Lock()
 		a.table = table
@@ -78,7 +100,8 @@ func (a *AutoRewrites) periodicUpdate() {
 	}
 }
 
-func (a *AutoRewrites) process(host string) []net.IP {
+// Get the list of IP addresses for the hostname
+func (a *AutoHosts) process(host string) []net.IP {
 	a.lock.Lock()
 	ips, _ := a.table[host]
 	ipsCopy := make([]net.IP, len(ips))

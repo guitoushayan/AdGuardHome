@@ -90,7 +90,7 @@ type Dnsfilter struct {
 	parentalUpstream     upstream.Upstream
 	safeBrowsingUpstream upstream.Upstream
 
-	autoRewrites AutoRewrites
+	autoHosts AutoHosts
 
 	Config   // for direct access by library users, even a = assignment
 	confLock sync.RWMutex
@@ -304,7 +304,7 @@ func (d *Dnsfilter) CheckHost(host string, qtype uint16, setts *RequestFiltering
 		return result, nil
 	}
 
-	ips := d.autoRewrites.process(host)
+	ips := d.autoHosts.process(host)
 	if ips != nil {
 		result.Reason = ReasonRewriteAuto
 		result.IPList = ips
@@ -664,7 +664,7 @@ func New(c *Config, blockFilters []Filter) *Dnsfilter {
 func (d *Dnsfilter) Start() {
 	d.filtersInitializerChan = make(chan filtersInitializerParams, 1)
 	go d.filtersInitializer()
-	d.autoRewrites.Init()
+	d.autoHosts.Init()
 
 	if d.Config.HTTPRegister != nil { // for tests
 		d.registerSecurityHandlers()
