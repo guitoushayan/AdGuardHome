@@ -12,7 +12,6 @@ import Examples from '../Dns/Upstream/Examples';
 import { toggleAllServices } from '../../../helpers/helpers';
 import {
     required,
-    clientId,
     renderInputField,
     renderGroupField,
     renderSelectField,
@@ -51,7 +50,7 @@ const validate = (values) => {
     if (ids && ids.length) {
         const idArrayErrors = [];
         ids.forEach((id, idx) => {
-            idArrayErrors[idx] = required(id) || clientId(id);
+            idArrayErrors[idx] = required(id);
         });
 
         if (idArrayErrors.length) {
