@@ -61,6 +61,7 @@ func (a *AutoHosts) load(table map[string][]net.IP, fn string) {
 			ips, ok := table[host]
 			if ok {
 				ips = append(ips, ipAddr)
+				table[host] = ips
 			} else {
 				table[host] = []net.IP{ipAddr}
 			}
