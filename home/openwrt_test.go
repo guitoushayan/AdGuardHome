@@ -46,4 +46,15 @@ nameserver 1.2.3.4`)
 	assert.Equal(t, uint32(43200), oc.leaseDur)
 	assert.Equal(t, "abab::1234", oc.bsDNS[0])
 	assert.Equal(t, "1.2.3.4", oc.bsDNS[1])
+
+	data = []byte(`config host '123412341234'
+option mac '12:34:12:34:12:34'
+option ip '192.168.8.2'
+option name 'hostname'`)
+	assert.True(t, nil == oc.readConfDHCPStatic(data))
+	assert.Equal(t, 1, len(oc.leases))
+	assert.Equal(t, "12:34:12:34:12:34", oc.leases[0].HWAddr.String())
+	assert.Equal(t, "192.168.8.2", oc.leases[0].IP.String())
+	assert.Equal(t, "hostname", oc.leases[0].Hostname)
+
 }

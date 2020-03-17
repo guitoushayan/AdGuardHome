@@ -1,11 +1,14 @@
 package home
 
 import (
+	"bufio"
 	"fmt"
 	"io/ioutil"
 	"net"
 	"strconv"
+	"strings"
 
+	"github.com/AdguardTeam/AdGuardHome/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/util"
 )
 
@@ -18,6 +21,9 @@ type openwrtConfig struct {
 	dhcpStart     string
 	dhcpLimit     string
 	dhcpLeasetime string
+
+	// dhcp static leases:
+	leases []dhcpd.Lease
 
 	// resolv.conf:
 	nameservers []string
@@ -49,10 +55,12 @@ func parseCmd(line string) (string, string, string) {
 
 // Parse system configuration data
 func (oc *openwrtConfig) readConf(data []byte, section string, iface string) {
-	lines := string(data)
 	state := 0
-	for len(lines) != 0 {
-		line := util.SplitNext(&lines, '\n')
+	sr := strings.NewReader(string(data))
+	r := bufio.NewReader(sr)
+	for {
+		line, err := r.ReadString('\n')
+		line = strings.TrimSpace(line)
 		if len(line) == 0 {
 			if state == 2 {
 				return
@@ -104,7 +112,74 @@ func (oc *openwrtConfig) readConf(data []byte, section string, iface string) {
 				oc.dhcpLeasetime = word3
 			}
 		}
+
+		if err != nil {
+			break
+		}
 	}
+}
+func (oc *openwrtConfig) readConfDHCPStatic(data []byte) error {
+	state := 0
+	sr := strings.NewReader(string(data))
+	r := bufio.NewReader(sr)
+	lease := dhcpd.Lease{}
+	for {
+		line, err := r.ReadString('\n')
+		line = strings.TrimSpace(line)
+		if len(line) == 0 {
+			if len(lease.HWAddr) != 0 && len(lease.IP) != 0 {
+				oc.leases = append(oc.leases, lease)
+			}
+			lease = dhcpd.Lease{}
+			state = 0
+		}
+
+		word1, word2, word3 := parseCmd(line)
+
+		switch state {
+		case 0:
+			if word1 == "config" {
+				state = 1
+				if word2 == "host" {
+					state = 2
+				}
+			}
+
+		case 1:
+			// not interested
+			break
+
+		case 2:
+			if word1 != "option" {
+				break
+			}
+			switch word2 {
+			case "mac":
+				lease.HWAddr, err = net.ParseMAC(word3)
+				if err != nil {
+					return err
+				}
+
+			case "ip":
+				lease.IP = net.ParseIP(word3)
+				if lease.IP == nil || lease.IP.To4() == nil {
+					return fmt.Errorf("Invalid IP address")
+				}
+
+			case "name":
+				lease.Hostname = word3
+			}
+		}
+
+		if err != nil {
+			break
+		}
+	}
+
+	if len(lease.HWAddr) != 0 && len(lease.IP) != 0 {
+		oc.leases = append(oc.leases, lease)
+	}
+	return nil
 }
 
 // Parse "/etc/resolv.conf" data
