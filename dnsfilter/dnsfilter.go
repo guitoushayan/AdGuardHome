@@ -236,6 +236,7 @@ func (d *Dnsfilter) filtersInitializer() {
 func (d *Dnsfilter) Close() {
 	d.engineLock.Lock()
 	defer d.engineLock.Unlock()
+	d.autoHosts.Close()
 	d.reset()
 }
 
