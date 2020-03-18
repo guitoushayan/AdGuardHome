@@ -19,7 +19,7 @@ type accessCtx struct {
 	disallowedClientsIPNet []net.IPNet // CIDRs of clients that should be blocked
 
 	blockedHosts         map[string]bool // hosts that should be blocked
-	blockedHostsWildcard []string
+	blockedHostsWildcard []string        // wildcards for the hosts to block
 }
 
 func (a *accessCtx) Init(allowedClients, disallowedClients, blockedHosts []string) error {
