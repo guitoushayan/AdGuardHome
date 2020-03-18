@@ -445,16 +445,16 @@ func (s *statsCtx) clear() {
 
 // Get Client IP address
 func (s *statsCtx) getClientIP(clientIP string) string {
-	if s.conf.HideClientIP {
+	if s.conf.AnonymizeClientIP {
 		ip := net.ParseIP(clientIP)
 		if ip != nil {
 			ip4 := ip.To4()
-			const HideClientIP4Mask = 24
-			const HideClientIP6Mask = 112
+			const AnonymizeClientIP4Mask = 24
+			const AnonymizeClientIP6Mask = 112
 			if ip4 != nil {
-				clientIP = ip4.Mask(net.CIDRMask(HideClientIP4Mask, 32)).String()
+				clientIP = ip4.Mask(net.CIDRMask(AnonymizeClientIP4Mask, 32)).String()
 			} else {
-				clientIP = ip.Mask(net.CIDRMask(HideClientIP6Mask, 128)).String()
+				clientIP = ip.Mask(net.CIDRMask(AnonymizeClientIP6Mask, 128)).String()
 			}
 		}
 	}

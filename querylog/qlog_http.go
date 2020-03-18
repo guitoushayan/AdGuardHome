@@ -106,9 +106,9 @@ func (l *queryLog) handleQueryLogClear(w http.ResponseWriter, r *http.Request) {
 }
 
 type qlogConfig struct {
-	Enabled      bool   `json:"enabled"`
-	Interval     uint32 `json:"interval"`
-	HideClientIP bool   `json:"hide_client_ip"`
+	Enabled           bool   `json:"enabled"`
+	Interval          uint32 `json:"interval"`
+	AnonymizeClientIP bool   `json:"anonymize_client_ip"`
 }
 
 // Get configuration
@@ -116,7 +116,7 @@ func (l *queryLog) handleQueryLogInfo(w http.ResponseWriter, r *http.Request) {
 	resp := qlogConfig{}
 	resp.Enabled = l.conf.Enabled
 	resp.Interval = l.conf.Interval
-	resp.HideClientIP = l.conf.HideClientIP
+	resp.AnonymizeClientIP = l.conf.AnonymizeClientIP
 
 	jsonVal, err := json.Marshal(resp)
 	if err != nil {
@@ -153,8 +153,8 @@ func (l *queryLog) handleQueryLogConfig(w http.ResponseWriter, r *http.Request) 
 	if req.Exists("interval") {
 		conf.Interval = d.Interval
 	}
-	if req.Exists("hide_client_ip") {
-		conf.HideClientIP = d.HideClientIP
+	if req.Exists("anonymize_client_ip") {
+		conf.AnonymizeClientIP = d.AnonymizeClientIP
 	}
 	l.conf = &conf
 	l.lock.Unlock()

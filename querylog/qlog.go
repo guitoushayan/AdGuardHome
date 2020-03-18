@@ -196,7 +196,7 @@ const (
 func (l *queryLog) getData(params getDataParams) map[string]interface{} {
 	now := time.Now()
 
-	if len(params.Client) != 0 && l.conf.HideClientIP {
+	if len(params.Client) != 0 && l.conf.AnonymizeClientIP {
 		params.Client = l.getClientIP(params.Client)
 	}
 
@@ -268,16 +268,16 @@ func (l *queryLog) getData(params getDataParams) map[string]interface{} {
 
 // Get Client IP address
 func (l *queryLog) getClientIP(clientIP string) string {
-	if l.conf.HideClientIP {
+	if l.conf.AnonymizeClientIP {
 		ip := net.ParseIP(clientIP)
 		if ip != nil {
 			ip4 := ip.To4()
-			const HideClientIP4Mask = 24
-			const HideClientIP6Mask = 112
+			const AnonymizeClientIP4Mask = 24
+			const AnonymizeClientIP6Mask = 112
 			if ip4 != nil {
-				clientIP = ip4.Mask(net.CIDRMask(HideClientIP4Mask, 32)).String()
+				clientIP = ip4.Mask(net.CIDRMask(AnonymizeClientIP4Mask, 32)).String()
 			} else {
-				clientIP = ip.Mask(net.CIDRMask(HideClientIP6Mask, 128)).String()
+				clientIP = ip.Mask(net.CIDRMask(AnonymizeClientIP6Mask, 128)).String()
 			}
 		}
 	}

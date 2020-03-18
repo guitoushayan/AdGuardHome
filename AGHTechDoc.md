@@ -1285,19 +1285,19 @@ Request:
 	{
 		"enabled": true | false
 		"interval": 1 | 7 | 30 | 90
-		"hide_client_ip": true | false // hide clients' IP addresses
+		"anonymize_client_ip": true | false // anonymize clients' IP addresses
 	}
 
 Response:
 
 	200 OK
 
-`hide_client_ip`:
+`anonymize_client_ip`:
 1. New log entries written to a log file will contain modified client IP addresses.  Note that there's no way to obtain the full IP address later for these entries.
 2. `GET /control/querylog` response data will contain modified client IP addresses (masked /24 or /112).
 3. Searching by client IP won't work for the previously stored entries.
 
-How `hide_client_ip` affects Stats:
+How `anonymize_client_ip` affects Stats:
 1. After AGH restart, new stats entries will contain modified client IP addresses.
 2. Existing entries are not affected.
 
@@ -1315,7 +1315,7 @@ Response:
 	{
 		"enabled": true | false
 		"interval": 1 | 7 | 30 | 90
-		"hide_client_ip": true | false
+		"anonymize_client_ip": true | false
 	}
 
 
