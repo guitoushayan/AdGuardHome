@@ -2,6 +2,7 @@ package util
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -65,4 +66,18 @@ func SplitNext(str *string, splitBy byte) string {
 		*str = ""
 	}
 	return strings.TrimSpace(s)
+}
+
+// isOpenWrt checks if OS is OpenWRT
+func IsOpenWrt() bool {
+	if runtime.GOOS != "linux" {
+		return false
+	}
+
+	body, err := ioutil.ReadFile("/etc/os-release")
+	if err != nil {
+		return false
+	}
+
+	return strings.Contains(string(body), "OpenWrt")
 }

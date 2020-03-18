@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -74,10 +75,16 @@ func (a *AutoHosts) load(table map[string][]net.IP, fn string) {
 func (a *AutoHosts) periodicUpdate() {
 	for {
 		table := make(map[string][]net.IP)
-		a.load(table, "/etc/hosts")
 
-		dirs := []string{
-			"/tmp/hosts", // OpenWRT: "/tmp/hosts/dhcp.cfg01411c"
+		hostsFn := "/etc/hosts"
+		if runtime.GOOS == "windows" {
+			hostsFn = os.ExpandEnv("$SystemRoot\\system32\\drivers\\etc\\hosts")
+		}
+		a.load(table, hostsFn)
+
+		dirs := []string{}
+		if util.IsOpenWrt() {
+			dirs = append(dirs, "/tmp/hosts") // OpenWRT: "/tmp/hosts/dhcp.cfg01411c"
 		}
 		for _, dir := range dirs {
 			fis, err := ioutil.ReadDir(dir)

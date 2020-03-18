@@ -90,7 +90,7 @@ type Dnsfilter struct {
 	parentalUpstream     upstream.Upstream
 	safeBrowsingUpstream upstream.Upstream
 
-	autoHosts AutoHosts
+	autoHosts AutoHosts // IP-hostname pairs taken from system configuration (e.g. /etc/hosts) files
 
 	Config   // for direct access by library users, even a = assignment
 	confLock sync.RWMutex
